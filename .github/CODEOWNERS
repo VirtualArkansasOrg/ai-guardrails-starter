@@ -1,0 +1,12 @@
+# Every change needs approval from a code owner. Replace the username with your
+# technical owner (or a team, like @your-org/tech-reviewers). The last matching
+# line wins, so the guardrail files are listed again on purpose: when you give
+# folders to different owners, the guardrails stay with IT.
+*                         @your-github-username
+/.github/                 @your-github-username
+/.claude/                 @your-github-username
+/CLAUDE.md                @your-github-username
+/AGENTS.md                @your-github-username
+/.gitleaks.toml           @your-github-username
+/.gitleaksignore          @your-github-username
+/.pre-commit-config.yaml  @your-github-username

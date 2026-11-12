@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Data exports (student data never goes in the repo)
+*.csv
+*.xlsx
+*.xls
+exports/
+!docs/*.csv
+# Need a CSV that isn't student data (a lookup table)? Put it in data/; the reviewer checks it.
+!data/*.csv
+!tests/fixtures/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,0 +1,8 @@
+# Runs gitleaks on staged changes before every commit, on each laptop that
+# ran `pre-commit install`. It's opt-in per person, which is why the same
+# scan also runs in GitHub Actions on every pull request.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

@@ -1,0 +1,39 @@
+# Scans every pull request (and every push to main) for secrets.
+# Runs the gitleaks program directly, so no license key or third-party
+# action is needed. The job name "gitleaks" is the required status check.
+name: gitleaks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+
+      - name: Scan for secrets
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            # Use main's copy of the config, so a pull request can't loosen its own scan.
+            git show "$BASE_SHA:.gitleaks.toml" > /tmp/gitleaks.toml 2>/dev/null || cp .gitleaks.toml /tmp/gitleaks.toml
+            ./gitleaks git --config /tmp/gitleaks.toml --log-opts="$BASE_SHA..$HEAD_SHA" --redact --verbose --exit-code 1
+          else
+            ./gitleaks git --config .gitleaks.toml --redact --verbose --exit-code 1
+          fi

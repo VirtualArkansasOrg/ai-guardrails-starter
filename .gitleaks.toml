@@ -1,0 +1,18 @@
+# gitleaks config: keeps every default rule and adds rules for formats the
+# defaults (and GitHub push protection) don't know. Add your own here.
+title = "Guardrails gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "acot-demo-key"
+description = "ACOT demo key (fake, safe for testing)"
+regex = '''ACOTDEMO-[A-Z0-9]{24}'''
+keywords = ["acotdemo"]
+
+[[rules]]
+id = "canvas-access-token"
+description = "Canvas LMS access token (check the shape against one of your own tokens)"
+regex = '''\b\d{1,6}~[A-Za-z0-9]{64}\b'''
+keywords = ["~"]

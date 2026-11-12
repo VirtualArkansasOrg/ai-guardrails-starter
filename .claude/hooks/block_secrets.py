@@ -36,7 +36,14 @@ SECRET_PATTERNS = [
 GIT_PUSH = r"\bgit\b[^;&|\n]*\bpush\b[^;&|\n]*"
 # Commit messages are free text, so they are removed before the checks below.
 # Otherwise "git commit -m 'Ignore .env'" or "-m 'fix -n flag'" would be blocked.
-COMMIT_MESSAGE = r"""(\s(-m|--message)(=|\s*))("[^"$`]*"|'[^']*')"""
+COMMIT_MESSAGE = r"""(\s(-m|--message|--title|--body)(=|\s*))("[^"$`]*"|'[^']*')"""
+# Only inside git commit and gh pr/issue commands, so "less -m '.env'" is still checked.
+MESSAGE_COMMANDS = r"""\b(git\b[^;&|\n]*\bcommit|gh\s+(pr|issue))\b('[^']*'|"[^"$`]*"|[^;&|\n'"])*"""
+# Claude Code writes messages as "$(cat <<'EOF' ... EOF)". With a quoted delimiter
+# the text is never run or expanded, so it is removed too.
+HEREDOC_MESSAGE = r"""\$\(\s*cat\s+<<-?\s*'(\w+)'\n(?:(?!\t*\1\n)[^\n]*\n)*?\t*\1\n\s*\)"""
+# The PowerShell version: a single-quoted here-string, @' ... '@.
+HERESTRING_MESSAGE = r"""@'\n.*?\n'@"""
 BLOCKED_COMMANDS = [
     (r"--no-veri|\bgit\b[^;&|\n]*\bcommit\b[^;&|\n]*\s-[a-zA-Z]*n[a-zA-Z]*\b"
      r"|(?i:core\.hookspath)|\bSKIP=|\.git[/\\]hooks|pre-commit\s+uninstall|disableAllHooks",
@@ -46,8 +53,8 @@ BLOCKED_COMMANDS = [
     (GIT_PUSH + r"""(\s|:|refs/heads/)["']?(main|master)(?![\w./-])""",
      "Pushing to main is not allowed. Push a branch and open a pull request."),
     (r"(?<![\w.-])\.env(?!\.example\b)(\.[\w-]+)*(?![\w.-])",
-     "Reading or changing .env is not allowed. Use .env.example for variable names, "
-     "and ask the person to create or edit .env themselves."),
+     "Reading or changing .env is not allowed. Use .env.example for variable names, and ask the "
+     "person to add the value themselves (.env on their computer, or the cloud environment's settings on the web)."),
 ]
 
 SHELL_TOOLS = ("Bash", "PowerShell")
@@ -84,7 +91,12 @@ def main():
 
     if tool in SHELL_TOOLS:
         command = tool_input.get("command", "")
-        checked = re.sub(COMMIT_MESSAGE, r"\1''", command)
+        checked = re.sub(r"\\\n", " ", command)  # join "\" line continuations
+        checked = re.sub(HEREDOC_MESSAGE, "''", checked)
+        if tool == "PowerShell":
+            checked = re.sub(HERESTRING_MESSAGE, "''", checked, flags=re.S)
+        checked = re.sub(MESSAGE_COMMANDS,
+                         lambda m: re.sub(COMMIT_MESSAGE, r"\1''", m.group(0)), checked)
         for pattern, message in BLOCKED_COMMANDS:
             if re.search(pattern, checked):
                 block(message)
@@ -101,7 +113,8 @@ def main():
     if label:
         block(
             "Blocked: this would put " + label + " into the repo or a command. "
-            "Store it in .env and read it from an environment variable."
+            "Read it from an environment variable. The person adds the value themselves: in .env "
+            "on their own computer, or in the cloud environment's settings in Claude Code on the web."
         )
     sys.exit(0)
 

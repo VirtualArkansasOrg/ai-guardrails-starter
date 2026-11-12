@@ -19,3 +19,6 @@
 | Bypass list | Who is allowed to skip a ruleset. Leave it empty. |
 | `.env` | A local file that holds real keys. It's never committed. |
 | Canary token | A fake credential that alerts you when someone tries to use it |
+| Merge | Applying an approved pull request to main |
+| Organization | A shared GitHub account the district owns, so tools survive staff leaving |
+| Write access | Permission to change a repo. Code owners need it. |

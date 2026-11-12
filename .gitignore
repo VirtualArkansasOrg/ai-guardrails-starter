@@ -10,6 +10,8 @@ secrets/
 *.xls
 exports/
 !docs/*.csv
+# Need a CSV that isn't student data (a lookup table)? Put it in data/; the reviewer checks it.
+!data/*.csv
 !tests/fixtures/*.csv
 
 # Python

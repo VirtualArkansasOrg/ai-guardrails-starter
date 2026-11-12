@@ -1,5 +1,6 @@
 # gitleaks config: keeps every default rule and adds rules for formats the
-# defaults (and GitHub push protection) don't know. Add your own here.
+# defaults (and GitHub push protection) don't know. Add rules for your own
+# systems' tokens (LMS, SIS, help desk, internal tools) here. The Canvas rule is an example.
 title = "Guardrails gitleaks config"
 
 [extend]
@@ -13,6 +14,6 @@ keywords = ["acotdemo"]
 
 [[rules]]
 id = "canvas-access-token"
-description = "Canvas LMS access token (check the shape against one of your own tokens)"
+description = "Example: Canvas LMS access token. Replace or add rules for the systems you use."
 regex = '''\b\d{1,6}~[A-Za-z0-9]{64}\b'''
 keywords = ["~"]

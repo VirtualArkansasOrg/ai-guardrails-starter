@@ -8,18 +8,25 @@
       "Read(./secrets/**)",
       "Read(./exports/**)",
       "Edit(**/.env)",
-      "Edit(**/.env.local)"
+      "Edit(**/.env.local)",
+      "Read(**/.env.development)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.test)",
+      "Edit(./.claude/**)",
+      "Edit(./.github/workflows/**)"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "^(Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit)$|^mcp__",
+        "matcher": "^(Bash|PowerShell|Read|Grep|Write|Edit|MultiEdit|NotebookEdit)$|^mcp__",
         "hooks": [
           {
             "type": "command",
             "command": "python",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/block_secrets.py"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/block_secrets.py"
+            ],
             "onFailure": "block"
           }
         ]

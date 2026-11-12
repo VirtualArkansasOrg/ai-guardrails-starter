@@ -1,4 +1,5 @@
-# Scans every pull request (and every push to main) for secrets.
+# Scans every pull request (and every push to main) for secrets. An inline
+# gitleaks:allow comment still works, so reviewers should look for new ones.
 # Runs the gitleaks program directly, so no license key or third-party
 # action is needed. The job name "gitleaks" is the required status check.
 name: gitleaks
@@ -22,6 +23,7 @@ jobs:
       - name: Install gitleaks
         run: |
           curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
           tar -xzf gitleaks.tar.gz gitleaks
 
       - name: Scan for secrets
@@ -31,8 +33,10 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ "$EVENT" = "pull_request" ]; then
-            # Use main's copy of the config, so a pull request can't loosen its own scan.
+            # Use main's config and ignore list, so a pull request can't loosen its own scan by
+            # editing them. (A pull request that edits this workflow needs a code owner's review.)
             git show "$BASE_SHA:.gitleaks.toml" > /tmp/gitleaks.toml 2>/dev/null || cp .gitleaks.toml /tmp/gitleaks.toml
+            git show "$BASE_SHA:.gitleaksignore" > .gitleaksignore 2>/dev/null || rm -f .gitleaksignore
             ./gitleaks git --config /tmp/gitleaks.toml --log-opts="$BASE_SHA..$HEAD_SHA" --redact --verbose --exit-code 1
           else
             ./gitleaks git --config .gitleaks.toml --redact --verbose --exit-code 1

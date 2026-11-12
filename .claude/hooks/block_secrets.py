@@ -17,8 +17,8 @@ import json
 import re
 import sys
 
-# Known secret formats. Add your own systems' token formats here and in
-# .gitleaks.toml.
+# Known secret formats. Add your own systems' token formats (LMS, SIS, help
+# desk, internal tools) here and in .gitleaks.toml. The Canvas one is an example.
 SECRET_PATTERNS = [
     (r"\b(AKIA|ASIA)[0-9A-Z]{16}\b", "an AWS access key"),
     (r"ACOTDEMO-[A-Z0-9]{24}", "the ACOT demo key (fake)"),
@@ -34,16 +34,20 @@ SECRET_PATTERNS = [
 
 # Shell commands Claude may not run here. Each entry: (pattern, message).
 GIT_PUSH = r"\bgit\b[^;&|\n]*\bpush\b[^;&|\n]*"
+# Commit messages are free text, so they are removed before the checks below.
+# Otherwise "git commit -m 'Ignore .env'" or "-m 'fix -n flag'" would be blocked.
+COMMIT_MESSAGE = r"""(\s(-m|--message)(=|\s*))("[^"$`]*"|'[^']*')"""
 BLOCKED_COMMANDS = [
-    (r"--no-verify|\bgit\b[^;&|\n]*\bcommit\b[^;&|\n]*\s-[a-zA-Z]*n[a-zA-Z]*\b"
-     r"|core\.hooksPath|\bSKIP=|\.git[/\\]hooks",
+    (r"--no-veri|\bgit\b[^;&|\n]*\bcommit\b[^;&|\n]*\s-[a-zA-Z]*n[a-zA-Z]*\b"
+     r"|(?i:core\.hookspath)|\bSKIP=|\.git[/\\]hooks|pre-commit\s+uninstall|disableAllHooks",
      "Skipping git hooks is not allowed in this repo."),
-    (GIT_PUSH + r"(--force|\s-[a-zA-Z]*f\b|\s\+\S)",
+    (GIT_PUSH + r"(--force|\s-[a-zA-Z]*f\b|\s\+\S|--mirror)",
      "Force-pushing is not allowed in this repo."),
-    (GIT_PUSH + r"(\s|:)(main|master)(\s|$|[;&|])",
+    (GIT_PUSH + r"""(\s|:|refs/heads/)["']?(main|master)(?![\w./-])""",
      "Pushing to main is not allowed. Push a branch and open a pull request."),
     (r"(?<![\w.-])\.env(?!\.example\b)(\.[\w-]+)*(?![\w.-])",
-     "Reading or changing .env is not allowed. Use .env.example for variable names."),
+     "Reading or changing .env is not allowed. Use .env.example for variable names, "
+     "and ask the person to create or edit .env themselves."),
 ]
 
 SHELL_TOOLS = ("Bash", "PowerShell")
@@ -80,16 +84,20 @@ def main():
 
     if tool in SHELL_TOOLS:
         command = tool_input.get("command", "")
+        checked = re.sub(COMMIT_MESSAGE, r"\1''", command)
         for pattern, message in BLOCKED_COMMANDS:
-            if re.search(pattern, command):
+            if re.search(pattern, checked):
                 block(message)
     else:
-        path = str(tool_input.get("file_path", "") or tool_input.get("notebook_path", ""))
+        path = str(tool_input.get("file_path", "") or tool_input.get("notebook_path", "")
+                   or tool_input.get("path", ""))
         name = re.split(r"[/\\]", path)[-1]
         if re.fullmatch(r"\.env(\.[\w-]+)*", name) and name != ".env.example":
             block("Reading or changing .env is not allowed. Use .env.example for variable names.")
 
     label = find_secret("\n".join(strings(tool_input)))
+    if label and tool.startswith("mcp__"):
+        block("Blocked: this would send " + label + " to " + tool + ". Don't share keys this way.")
     if label:
         block(
             "Blocked: this would put " + label + " into the repo or a command. "

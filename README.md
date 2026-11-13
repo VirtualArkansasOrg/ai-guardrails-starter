@@ -2,7 +2,7 @@
 
 A template repository for school districts, colleges, libraries and agencies whose staff are building software with AI coding agents. It helps keep passwords, keys and tokens out of the code, and sets things up so a second person approves a change before it reaches everyone. (GitHub only enforces that approval on public repos or paid plans; see below.)
 
-It's a starting point. Every organization runs different systems (LMS, SIS, Google or Microsoft, help desk, home-grown tools), so change anything here to fit yours. It comes from the session "Your Staff Are Already Building Apps with AI: A Governance Model That Works" (ACOT 2026, Kyle Yancey, Virtual Arkansas), where we shared what Virtual Arkansas does.
+It's a starting point. Every organization runs different systems (LMS, SIS, Google or Microsoft, help desk, home-grown tools), so change anything here to fit yours. It comes from the session ["Your Staff Are Already Building Apps with AI: A Governance Model That Works"](https://canva.link/zksm9k1j7dqc049) (ACOT 2026, Kyle Yancey, Virtual Arkansas), where we shared what Virtual Arkansas does.
 
 Never used GitHub? Most steps below work in a web browser.
 
